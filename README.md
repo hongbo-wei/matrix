@@ -1,5 +1,5 @@
 # matrix
-**The Matrix**: *Matrix Digital Rain*  (web-based green code rain) | [Live view of The Matrix](https://hongbo-wei.github.io/matrix.html)
+**[The Matrix](https://www.imdb.com/title/tt0133093/?ref_=nv_sr_srsg_1_tt_6_nm_1_in_0_q_The%2520Matrix)**: *Matrix Digital Rain*  (web-based green code rain) | [Live view of The Matrix](https://hongbo-wei.github.io/matrix.html)
 
 This repository contains a simple web page that simulates the famous "digital rain" effect seen in the film *The Matrix*. The effect is implemented using HTML5's `<canvas>` element and JavaScript.
 
