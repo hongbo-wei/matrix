@@ -19,7 +19,7 @@ The digital rain effect can be viewed in any modern web browser. To run the proj
 
 1. Clone this repository.
    ```bash
-   git clone https://github.com/<your-repo>/matrix.git
+   git clone https://github.com/hongbo-wei/matrix.git
    ```
 2. Open the `index.html` file in any browser.
 
