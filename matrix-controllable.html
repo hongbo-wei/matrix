@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Rain</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+        }
+
+        canvas {
+            display: block;
+            background: #000;
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        .control-btn {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(0, 255, 0, 0.3);
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        .control-btn.active {
+            background: rgba(0, 255, 0, 0.5);
+            box-shadow: 0 0 15px #00ff00;
+        }
+
+        .info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #00ff00;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix"></canvas>
+    
+    <div class="controls">
+        <button class="control-btn" onclick="toggleRain()">暂停/继续</button>
+        <button class="control-btn" onclick="changeSpeed()">速度调节</button>
+        <button class="control-btn" onclick="toggleColor()">颜色切换</button>
+        <button class="control-btn" onclick="resetMatrix()">重置</button>
+    </div>
+    
+    <div class="info">
+        <div>Matrix Rain - 数字雨效果</div>
+        <div id="fps">FPS: 60</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+
+        // 设置画布大小
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // 配置参数
+        let config = {
+            fontSize: 14,
+            columns: Math.floor(canvas.width / 14),
+            drops: [],
+            speed: 1,
+            isRunning: true,
+            colorMode: 'green',
+            colors: {
+                green: '#00ff00',
+                blue: '#0080ff',
+                red: '#ff0040',
+                rainbow: ['#ff0000', '#ff8000', '#ffff00', '#00ff00', '#0080ff', '#8000ff']
+            }
+        };
+
+        // 初始化雨滴
+        function initDrops() {
+            config.drops = [];
+            for (let i = 0; i < config.columns; i++) {
+                config.drops[i] = Math.random() * -100;
+            }
+        }
+        initDrops();
+
+        // 字符集 - 使用日文片假名和数字
+        const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        // 获取随机字符
+        function getRandomChar() {
+            return chars[Math.floor(Math.random() * chars.length)];
+        }
+
+        // 获取颜色
+        function getColor(index, isHead = false) {
+            if (config.colorMode === 'rainbow') {
+                return config.colors.rainbow[index % config.colors.rainbow.length];
+            }
+            return isHead ? '#ffffff' : config.colors[config.colorMode];
+        }
+
+        // 绘制矩阵雨
+        function drawMatrix() {
+            if (!config.isRunning) return;
+
+            // 半透明黑色背景，形成拖尾效果
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 设置字体
+            ctx.font = config.fontSize + 'px Courier New';
+            ctx.textAlign = 'center';
+
+            // 绘制每个雨滴
+            for (let i = 0; i < config.drops.length; i++) {
+                const text = getRandomChar();
+                const x = i * config.fontSize;
+                const y = config.drops[i] * config.fontSize;
+
+                // 头部字符为白色，其余为指定颜色
+                const isHead = Math.random() > 0.98;
+                ctx.fillStyle = getColor(i, isHead);
+                
+                // 添加发光效果
+                ctx.shadowBlur = isHead ? 10 : 5;
+                ctx.shadowColor = getColor(i, isHead);
+                
+                ctx.fillText(text, x, y);
+
+                // 重置阴影
+                ctx.shadowBlur = 0;
+
+                // 更新雨滴位置
+                if (y > canvas.height && Math.random() > 0.975) {
+                    config.drops[i] = 0;
+                }
+                config.drops[i]++;
+
+                // 随机重置一些雨滴，增加变化
+                if (Math.random() > 0.95) {
+                    config.drops[i] = 0;
+                }
+            }
+        }
+
+        // 动画循环
+        let lastTime = 0;
+        let frameCount = 0;
+        let fpsTime = 0;
+
+        function animate(currentTime) {
+            if (currentTime - lastTime >= 1000 / 60) {
+                drawMatrix();
+                lastTime = currentTime;
+                frameCount++;
+            }
+
+            // 更新FPS显示
+            if (currentTime - fpsTime >= 1000) {
+                document.getElementById('fps').textContent = `FPS: ${frameCount}`;
+                frameCount = 0;
+                fpsTime = currentTime;
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // 控制函数
+        function toggleRain() {
+            config.isRunning = !config.isRunning;
+            event.target.classList.toggle('active');
+        }
+
+        function changeSpeed() {
+            config.speed = config.speed >= 5 ? 1 : config.speed + 1;
+            event.target.textContent = `速度: ${config.speed}x`;
+        }
+
+        function toggleColor() {
+            const modes = ['green', 'blue', 'red', 'rainbow'];
+            const currentIndex = modes.indexOf(config.colorMode);
+            config.colorMode = modes[(currentIndex + 1) % modes.length];
+            event.target.textContent = `颜色: ${config.colorMode}`;
+        }
+
+        function resetMatrix() {
+            initDrops();
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // 响应窗口大小变化
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            config.columns = Math.floor(canvas.width / config.fontSize);
+            initDrops();
+        });
+
+        // 启动动画
+        animate(0);
+
+        // 添加键盘控制
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case ' ':
+                    e.preventDefault();
+                    toggleRain();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    config.speed = Math.min(5, config.speed + 0.5);
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    config.speed = Math.max(0.5, config.speed - 0.5);
+                    break;
+                case 'c':
+                    toggleColor();
+                    break;
+                case 'r':
+                    resetMatrix();
+                    break;
+            }
+        });
+
+        // 添加鼠标悬停效果
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / config.fontSize);
+            if (x >= 0 && x < config.drops.length) {
+                config.drops[x] = Math.max(0, config.drops[x] - 5);
+            }
+        });
+    </script>
+</body>
+</html>
